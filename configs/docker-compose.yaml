@@ -1,0 +1,34 @@
+version: "2"
+x-cent: &cent
+  image: centrifugo/centrifugo:v2
+  volumes:
+    - ./centrifugo.json:/config.json:ro
+  links:
+    - redis
+services:
+  redis:
+    image: redis
+    command: --save ''
+    ports: 
+      - 6355:6379
+  cent.admin:
+    <<: *cent
+    command: centrifugo --redis_host redis --name admin --admin --admin_insecure --api_insecure
+    ports:
+      - 8000:8000
+  cent: 
+    <<: *cent
+    command: centrifugo --redis_host redis --client_insecure
+    networks:
+      default:
+        aliases:
+          - cent.server
+  test:
+    build:
+      context: ..
+      args:
+        - package
+    command: -s ws://cent.server:8000/connection/websocket -nu 1000 -i redis://redis
+    links:
+      - redis
+      - cent
