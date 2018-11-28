@@ -4,16 +4,26 @@ import (
 	"fmt"
 )
 
-type Channel string
-
-func NewChannel(num int) Channel {
-	return Channel(fmt.Sprintf("CH.%00000000d", num))
+type Channel struct {
+	name string
+	u    *User
 }
 
-func (ch Channel) String() string {
-	return string(ch)
+func NewChannel(name string) *Channel {
+	return &Channel{name: name}
 }
 
-func (ch Channel) Attach(u *User) Channel {
-	return Channel(fmt.Sprintf("%s#%s", ch, u.ID))
+func (ch *Channel) String() string {
+	if ch.u != nil {
+		return fmt.Sprintf("%s#%s", ch.name, ch.u.ID)
+	}
+	return fmt.Sprintf("%s", ch.name)
+}
+
+func (ch *Channel) Attach(u *User) *Channel {
+	if ch.u != nil {
+		panic(fmt.Sprintf("Channel %s is already attached to user %s", ch.name, ch.u))
+	}
+	ch.u = u
+	return ch
 }

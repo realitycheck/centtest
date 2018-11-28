@@ -1,4 +1,13 @@
 {
     "secret": "secret",
-    "engine": "redis"
+    "engine": "redis",
+    "namespaces": [
+        {
+            "name": "system",
+            "presence": "true"
+        },
+        {
+            "name": "user"
+        }
+    ]
 }

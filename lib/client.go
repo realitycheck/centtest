@@ -7,7 +7,6 @@ import (
 type Client struct {
 	id        string
 	cli       *centrifuge.Client
-	u         *User
 	connected bool
 }
 
@@ -19,9 +18,18 @@ func NewClient(wsURL string, config centrifuge.Config) *Client {
 }
 
 func (c *Client) String() string {
-	if c.id != "" {
+	if c.connected {
 		return c.id
-	} else {
-		return "<NOT CONNECTED>"
 	}
+	return "<not connected>"
+}
+
+func (c *Client) disconnect() error {
+	if err := c.cli.Disconnect(); err != nil {
+		return err
+	}
+	if err := c.cli.Close(); err != nil {
+		return err
+	}
+	return nil
 }

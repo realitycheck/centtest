@@ -36,7 +36,7 @@ type redisGenerator struct {
 }
 
 func (g *redisGenerator) ID() string {
-	n, err := redis.Int(g.r.Do("INCR", "centtest:redisGenerator:ID"))
+	n, err := redis.Int(g.r.Do("INCR", "centtest.redisGenerator.ID"))
 	if err != nil {
 		panic(err)
 	}

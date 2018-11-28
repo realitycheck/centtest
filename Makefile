@@ -31,4 +31,4 @@ docker: ## Create docker's image
 	$(DOCKER) build . -t ${DOCKER_TAG} --build-arg GO_PACKAGE=${GO_PACKAGE}
 
 run: ## Run the testing layout
-	GO_PACKAGE=${GO_PACKAGE} $(COMPOSE) -f ${COMPOSE_FILE} up ${do}
+	GO_PACKAGE=${GO_PACKAGE} $(COMPOSE) -f ${COMPOSE_FILE} up ${q}
