@@ -1,4 +1,4 @@
-version: "2"
+version: "2.1"
 x-cent: &cent
   image: centrifugo/centrifugo:v2
   volumes:
@@ -9,14 +9,14 @@ services:
   redis:
     image: redis
     command: --save ''
-    ports: 
+    ports:
       - 6355:6379
   cent.admin:
     <<: *cent
     command: centrifugo --redis_host redis --name admin --admin --admin_insecure --api_insecure
     ports:
       - 8000:8000
-  cent: 
+  cent:
     <<: *cent
     command: centrifugo --redis_host redis --client_insecure
     networks:
@@ -27,8 +27,8 @@ services:
     build:
       context: ..
       args:
-        - package
-    command: -s ws://cent.server:8000/connection/websocket -nu 1000 -i redis://redis
+        - GO_PACKAGE
+    command: -s ws://cent.server:8000/connection/websocket -nu ${USERS:-1000} -nc ${CLIENTS:-1} -nch ${CHANNELS:-1} -i redis://redis
     links:
       - redis
       - cent

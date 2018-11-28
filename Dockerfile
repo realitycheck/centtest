@@ -1,9 +1,11 @@
 FROM golang as builder
 
-ARG package
-WORKDIR /go/src/${package}
+ARG GO_PACKAGE
+RUN echo GO_PACKAGE=${GO_PACKAGE}
+
+WORKDIR /go/src/${GO_PACKAGE}
 ADD . .
-RUN CGO_ENABLED=0 GOOS=linux OUTPUT=/app make
+RUN CGO_ENABLED=0 GOOS=linux GO_OUTPUT_FILE=/app make
 
 FROM scratch
 
