@@ -18,7 +18,7 @@ services:
       - 8000:8000
   cent:
     <<: *cent
-    command: centrifugo --redis_host redis --client_insecure
+    command: centrifugo --redis_host redis
     networks:
       default:
         aliases:
@@ -28,7 +28,7 @@ services:
       context: ..
       args:
         - GO_PACKAGE
-    command: -s ws://cent.server:8000/connection/websocket -nu ${USERS:-1000} -nc ${CLIENTS:-1} -nch ${CHANNELS:-1} -i redis://redis
+    command: -s ws://cent.server:8000/connection/websocket -debug -nu ${USERS:-1000} -nc ${CLIENTS:-1} -nch ${CHANNELS:-1} -i redis://redis
     links:
       - redis
       - cent

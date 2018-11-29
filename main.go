@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
 	"runtime/pprof"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/centrifugal/centrifuge-go"
@@ -59,34 +61,36 @@ func main() {
 	clientConfig.ReadTimeout = timeout
 	clientConfig.WriteTimeout = timeout
 
-	g := centtest.NewIDGenerator(idsource)
-
-	wg := &sync.WaitGroup{}
+	wg := sync.WaitGroup{}
 
 	tt := make(chan *centtest.Test)
-	done := make(chan struct{})
 	go func() {
 		for t := range tt {
 			go t.Run()
+			t := t
+			defer func() {
+				t.Close()
+				wg.Done()
+			}()
 		}
-		defer func() {
-			done <- struct{}{}
-		}()
 	}()
 
 	log.Printf("main: initing...")
+	g := centtest.NewIDGenerator(idsource)
 
 	for i := 0; i < numUsers; i++ {
 		u := centtest.NewUser(g)
 		for j := 0; j < numClients; j++ {
 			c := centtest.NewClient(server, clientConfig)
 			for k := 0; k < numChannels; k++ {
+				wg.Add(1)
 				name := fmt.Sprintf("%s:%d", chUser, k)
 				ch := centtest.NewChannel(name).Attach(u)
-				tt <- centtest.NewTest(u, c, ch, wg, debug)
+				tt <- centtest.NewTest(u, c, ch, debug)
 			}
+			wg.Add(1)
 			ch := centtest.NewChannel(chSystem)
-			tt <- centtest.NewTest(u, c, ch, wg, debug)
+			tt <- centtest.NewTest(u, c, ch, debug)
 		}
 	}
 
@@ -104,21 +108,24 @@ func main() {
 	if memprofile != "" {
 		f, err := os.Create(memprofile)
 		if err != nil {
-			log.Fatal("could not create memory profile: ", err)
+			log.Fatal("could not create MEM profile: ", err)
 		}
 		runtime.GC() // get up-to-date statistics
 		if err := pprof.WriteHeapProfile(f); err != nil {
-			log.Fatal("could not write memory profile: ", err)
+			log.Fatal("could not write MEM profile: ", err)
 		}
 		f.Close()
 	}
 
-	log.Printf("main: waiting...")
-	wg.Wait()
+	exit := make(chan os.Signal, 1)
+	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("main: closing...")
-	close(tt)
+	log.Printf("main: waiting...")
+	select {
+	case <-exit:
+		close(tt)
+	}
 
 	log.Printf("main: exiting...")
-	<-done
+	wg.Wait()
 }

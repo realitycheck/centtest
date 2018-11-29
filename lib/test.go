@@ -3,13 +3,11 @@ package centtest
 import (
 	"fmt"
 	"log"
-	"sync"
 
 	centrifuge "github.com/centrifugal/centrifuge-go"
 )
 
 type Test struct {
-	wg *sync.WaitGroup
 	u  *User
 	c  *Client
 	ch *Channel
@@ -17,9 +15,8 @@ type Test struct {
 	debug bool
 }
 
-func NewTest(u *User, c *Client, ch *Channel, wg *sync.WaitGroup, debug bool) *Test {
-	wg.Add(1)
-	return &Test{wg, u, c, ch, debug}
+func NewTest(u *User, c *Client, ch *Channel, debug bool) *Test {
+	return &Test{u, c, ch, debug}
 }
 
 func (t *Test) String() string {
@@ -27,7 +24,6 @@ func (t *Test) String() string {
 }
 
 func (t *Test) OnPublish(sub *centrifuge.Subscription, e centrifuge.PublishEvent) {
-	defer t.close()
 	t.log("centtest: Published, %s, data=%s", t, e.Data)
 }
 
@@ -85,9 +81,7 @@ func (t *Test) Run() {
 	}
 }
 
-func (t *Test) close() {
-	defer t.wg.Done()
-
+func (t *Test) Close() {
 	if t.c.connected {
 		if err := t.c.disconnect(); err != nil {
 			t.log("centtest: Disconnect error, %s, reason=%s", t, err)
